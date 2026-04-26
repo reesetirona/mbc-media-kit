@@ -887,8 +887,14 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
       <div class="success-icon">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
       </div>
-      <div class="success-text"><strong>Kit content generated.</strong> In production, this JSON is passed to python-pptx to fill your master deck automatically.</div>
+      <div class="success-text"><strong>Media kit ready!</strong> Click the button below to download your branded PowerPoint deck.</div>
     </div>
+
+    <!-- Download Button -->
+    <button class="download-btn" id="downloadBtn" onclick="triggerDownload()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download Media Kit (.pptx)
+    </button>
 
     <!-- JSON Output -->
     <div class="json-preview" id="jsonPreview"></div>
@@ -965,6 +971,8 @@ async function generateKit() {
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('genOutput').classList.remove('visible');
   document.getElementById('successBanner').classList.remove('visible');
+  document.getElementById('downloadBtn').classList.remove('visible');
+  window._pptxBlob = null;
   document.getElementById('jsonPreview').classList.remove('visible');
   document.getElementById('loadingState').classList.add('visible');
   document.getElementById('submitBtn').disabled = true;
@@ -1008,25 +1016,23 @@ async function generateKit() {
       throw new Error(err.detail || "Backend error");
     }
 
-    // ── Download the PPTX ─────────────────────────────────────────────────
+    // ── Store blob and show download button ───────────────────────────────
     const blob = await response.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `MBC_${clientName.replace(/\s+/g, '_')}_MediaKit.pptx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const fileName = `MBC_${clientName.replace(/\s+/g, '_')}_MediaKit.pptx`;
+
+    // Store on window so the button can access it
+    window._pptxBlob = blob;
+    window._pptxFileName = fileName;
 
     clearInterval(msgInterval);
     document.getElementById('loadingState').classList.remove('visible');
     document.getElementById('genOutput').classList.add('visible');
     document.getElementById('successBanner').classList.add('visible');
+    document.getElementById('downloadBtn').classList.add('visible');
 
-    document.getElementById('outTagline').textContent  = '✅ Media kit generated!';
-    document.getElementById('outIntro').textContent    = `Your branded PPTX for ${clientName} has been downloaded automatically.`;
-    document.getElementById('outWhy').textContent      = 'Open the file in PowerPoint to review and send to the client.';
+    document.getElementById('outTagline').textContent  = `✅ ${clientName} Media Kit is ready!`;
+    document.getElementById('outIntro').textContent    = 'Your branded PowerPoint deck has been generated with AI-tailored copy for this client.';
+    document.getElementById('outWhy').textContent      = 'Click the Download button below to save the file, then open it in PowerPoint.';
     document.getElementById('outCampaign').textContent = '';
     document.getElementById('outCta').textContent      = '';
 
@@ -1053,6 +1059,20 @@ function formatJSON(obj) {
   html += '<span class="json-brace">}</span>';
   return html;
 }
+
+// ── Download button handler ───────────────────────────────────────────────────
+function triggerDownload() {
+  if (!window._pptxBlob) return;
+  const url = URL.createObjectURL(window._pptxBlob);
+  const a   = document.createElement('a');
+  a.href     = url;
+  a.download = window._pptxFileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 </script>
 </body>
 </html>
