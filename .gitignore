@@ -1,0 +1,41 @@
+# ── Secrets (CRITICAL — never commit these) ───────────────────────────
+.env
+.env.local
+.env.production
+*.env
+service-account.json
+*-service-account.json
+
+# ── Generated output files ────────────────────────────────────────────
+output/
+*.pptx
+!master-deck/MBC_MASTER_DECK.pptx
+
+# ── Python ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# ── Node / Next.js ────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ───────────────────────────────────────────────────────────────
+.idea/
+.vscode/settings.json
+*.swp
