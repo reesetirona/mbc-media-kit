@@ -343,7 +343,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 .budget-labels {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
   font-family: 'DM Mono', monospace;
   margin-top: 6px;
@@ -631,7 +631,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
   display: none;
   width: 100%;
   padding: 13px;
-  background: var(--red);
+  background: #950606;
   color: var(--white);
   border: none;
   border-radius: 10px;
@@ -648,7 +648,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
 }
 
 .download-btn.visible { display: flex; }
-.download-btn:hover { background: var(--red2); transform: translateY(-1px); }
+.download-btn:hover { background: #7a0404; transform: translateY(-1px); }
 
 /* ── PLACEHOLDER JSON ── */
 .json-preview {
@@ -805,14 +805,20 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
       <div class="section">
         <div class="section-label">Budget Range</div>
         <div class="field">
-          <div class="budget-display" id="budgetDisplay">₱2,000,000 <span>estimated campaign budget</span></div>
-          <input type="range" id="budgetSlider" min="0" max="10" value="3" oninput="updateBudget(this.value)">
+          <div class="budget-display" id="budgetDisplay">₱500,000 <span>estimated campaign budget</span></div>
+          <input type="range" id="budgetSlider" min="0" max="10" value="0" oninput="updateBudget(this.value)">
           <div class="budget-labels">
             <span>₱500K</span>
+            <span>₱750K</span>
             <span>₱1M</span>
             <span>₱2M</span>
+            <span>₱3M</span>
             <span>₱5M</span>
-            <span>₱10M+</span>
+            <span>₱7M</span>
+            <span>₱10M</span>
+            <span>₱15M</span>
+            <span>₱20M</span>
+            <span>₱20M+</span>
           </div>
         </div>
       </div>
@@ -941,7 +947,7 @@ function updateBudget(v) {
   const pct = (v / 10) * 100;
   slider.style.background = `linear-gradient(to right, var(--navy) 0%, var(--navy) ${pct}%, var(--silver) ${pct}%)`;
 }
-updateBudget(3);
+updateBudget(0);
 
 // ── CHECKBOX TOGGLE ──────────────────────────────────────────────────────────
 function toggleCheck(label) {
