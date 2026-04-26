@@ -983,58 +983,122 @@ async function generateKit() {
     msgEl.textContent = msgs[mi];
   }, 1800);
 
+  const systemPrompt = `You are a senior media strategist for MBC Media Group, the Philippines' leading multi-platform broadcaster. MBC has 6 Strategic Business Units: Radio (DZRH, Love Radio, Yes FM, Easy Rock, Radyo Natin, Aksyon Radyo — 200 stations, 4.5M daily listeners), Digital (branded content, display, programmatic), TV (news, public affairs, entertainment), Events (on-ground activations), Promos (multi-platform promos, raffle draws), and Talents (talent management).
+
+You produce ONLY valid JSON — no preamble, no markdown fences, no explanation. Return exactly this structure:
+{
+  "tagline": "One punchy sentence tying MBC's reach to this client's brand mission",
+  "client_intro": "2-3 sentences explaining why MBC is the perfect partner for this specific client and industry",
+  "client_why": "2 sentences on the specific MBC advantage for this industry (cite specific stations/formats/timing where relevant)",
+  "sbu_1_name": "Name of most relevant SBU",
+  "sbu_1_desc": "2-3 sentences on why this SBU fits, with specifics",
+  "sbu_2_name": "Name of second most relevant SBU",
+  "sbu_2_desc": "2-3 sentences on why this SBU fits",
+  "sbu_3_name": "Name of third most relevant SBU",
+  "sbu_3_desc": "2-3 sentences on why this SBU fits",
+  "campaign_title": "Evocative 3-6 word campaign name in Filipino/English mix if appropriate",
+  "campaign_desc": "3 sentences describing a concrete integrated campaign concept for this client",
+  "deliverable_1": "Specific media deliverable with format and duration",
+  "deliverable_2": "Specific media deliverable",
+  "deliverable_3": "Specific media deliverable",
+  "platform_1": "Platform name — station names",
+  "pct_1": "Recommended % of media weight and rationale in one sentence",
+  "platform_2": "Platform name",
+  "pct_2": "Recommended % and rationale",
+  "platform_3": "Platform name",
+  "pct_3": "Recommended % and rationale",
+  "cta_line": "One personalized closing line addressed to this specific client",
+  "recommended_sbus": ["SBU name 1", "SBU name 2", "SBU name 3"]
+}`;
+
+  const userPrompt = `Generate a tailored MBC Media Group media kit for the following client:
+
+Client Name: ${clientName}
+Industry: ${industry}
+Campaign Objective: ${objective}
+Target Audience: ${audience || "Not specified"}
+Budget: ${budget}
+Preferred Platforms: ${selectedSBUs.length > 0 ? selectedSBUs.join(', ') : 'No preference — AI to decide'}
+Additional Notes: ${notes || "None"}
+
+Select the 3 most relevant SBUs for this client. Be specific, strategic, and compelling. Use Filipino market context where relevant.`;
 
   try {
-    // ── Call local backend → returns PPTX blob ───────────────────────────────
-    const response = await fetch("http://localhost:8000/generate-kit", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        client_name:   clientName,
-        industry:      industry,
-        objective:     objective,
-        audience:      audience || "",
-        budget:        budget,
-        selected_sbus: selectedSBUs,
-        notes:         notes || "",
-        rep_email:     ""
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userPrompt }]
       })
     });
 
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.detail || "Backend error");
-    }
-
-    // ── Download the PPTX ────────────────────────────────────────────────────
-    const blob = await response.blob();
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `MBC_${clientName.replace(/\s+/g, '_')}_MediaKit.pptx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const data = await response.json();
+    const raw = data.content?.[0]?.text || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const kit = JSON.parse(clean);
 
     clearInterval(msgInterval);
     document.getElementById('loadingState').classList.remove('visible');
+
+    // Populate preview
+    document.getElementById('outTagline').textContent = kit.tagline || '';
+    document.getElementById('outIntro').textContent   = kit.client_intro || '';
+    document.getElementById('outWhy').textContent     = kit.client_why || '';
+    document.getElementById('outCampaign').textContent = kit.campaign_title || '';
+    document.getElementById('outCta').textContent     = kit.cta_line || '';
+
+    const sbuContainer = document.getElementById('outSbus');
+    sbuContainer.innerHTML = '';
+    (kit.recommended_sbus || []).forEach(s => {
+      const tag = document.createElement('span');
+      tag.className = 'sbu-tag';
+      tag.textContent = s;
+      sbuContainer.appendChild(tag);
+    });
+
     document.getElementById('genOutput').classList.add('visible');
     document.getElementById('successBanner').classList.add('visible');
 
-    // ── Show success message in preview ──────────────────────────────────────
-    document.getElementById('outTagline').textContent   = '✅ Media kit generated!';
-    document.getElementById('outIntro').textContent     = `Your branded PPTX for ${clientName} has been downloaded automatically.`;
-    document.getElementById('outWhy').textContent       = 'Open the file in PowerPoint to review and send to the client.';
-    document.getElementById('outCampaign').textContent  = '';
-    document.getElementById('outCta').textContent       = '';
+    // JSON preview
+    const placeholders = {
+      "{{CLIENT_NAME}}":       clientName,
+      "{{CLIENT_INDUSTRY}}":   industry,
+      "{{TAGLINE}}":           kit.tagline,
+      "{{CLIENT_INTRO}}":      kit.client_intro,
+      "{{CLIENT_WHY}}":        kit.client_why,
+      "{{SBU_1_NAME}}":        kit.sbu_1_name,
+      "{{SBU_1_DESC}}":        kit.sbu_1_desc,
+      "{{SBU_2_NAME}}":        kit.sbu_2_name,
+      "{{SBU_2_DESC}}":        kit.sbu_2_desc,
+      "{{SBU_3_NAME}}":        kit.sbu_3_name,
+      "{{SBU_3_DESC}}":        kit.sbu_3_desc,
+      "{{CAMPAIGN_TITLE}}":    kit.campaign_title,
+      "{{CAMPAIGN_DESC}}":     kit.campaign_desc,
+      "{{DELIVERABLE_1}}":     kit.deliverable_1,
+      "{{DELIVERABLE_2}}":     kit.deliverable_2,
+      "{{DELIVERABLE_3}}":     kit.deliverable_3,
+      "{{PLATFORM_1}}":        kit.platform_1,
+      "{{PCT_1}}":             kit.pct_1,
+      "{{PLATFORM_2}}":        kit.platform_2,
+      "{{PCT_2}}":             kit.pct_2,
+      "{{PLATFORM_3}}":        kit.platform_3,
+      "{{PCT_3}}":             kit.pct_3,
+      "{{CTA_LINE}}":          kit.cta_line,
+    };
+
+    const jsonEl = document.getElementById('jsonPreview');
+    jsonEl.innerHTML = formatJSON(placeholders);
+    jsonEl.classList.add('visible');
 
   } catch (err) {
     clearInterval(msgInterval);
     document.getElementById('loadingState').classList.remove('visible');
     document.getElementById('emptyState').style.display = 'flex';
     document.getElementById('emptyState').querySelector('p').textContent =
-      'Error: ' + (err.message || 'Could not reach backend. Is the server running on port 8000?');
+      'Error: ' + (err.message || 'Could not reach MMG AI. Check your connection.');
     console.error(err);
   }
 
