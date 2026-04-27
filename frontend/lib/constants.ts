@@ -69,7 +69,10 @@ export const BUDGET_VALUES = [
   "₱20,000,000+",
 ] as const;
 
-export const BUDGET_LABELS = ["₱500K", "₱1M", "₱2M", "₱5M", "₱10M+"] as const;
+export const BUDGET_LABELS = [
+  "₱500K", "₱750K", "₱1M", "₱2M", "₱3M",
+  "₱5M", "₱7M", "₱10M", "₱15M", "₱20M", "₱20M+",
+] as const;
 
 export const LOADING_MESSAGES = [
   "Analyzing client brief…",
