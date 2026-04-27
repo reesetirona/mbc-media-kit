@@ -5,6 +5,7 @@ Returns a structured dict of placeholder values for the PPTX.
 """
 
 import os
+import re
 import json
 import anthropic
 from typing import TYPE_CHECKING
@@ -13,6 +14,8 @@ if TYPE_CHECKING:
     from main import KitRequest
 
 # ── System Prompt ──────────────────────────────────────────────────────────────
+# Marked for prompt caching — this block is identical on every request so
+# Anthropic charges 10% of normal input price after the first call.
 SYSTEM_PROMPT = """You are a senior media strategist for MBC Media Group, the Philippines' premier multi-platform broadcaster.
 
 MBC has 6 Strategic Business Units:
@@ -24,13 +27,7 @@ MBC has 6 Strategic Business Units:
 6. MBC Talents — Talent management. Brand endorsements through MBC radio/TV personalities with massive loyal followings.
 
 RESEARCH INSTRUCTIONS:
-Before writing the media kit, you MUST use the web_search tool to research the client. Search for:
-1. The client's brand positioning, recent campaigns, and marketing tone
-2. Their target market and key products/services in the Philippines
-3. Their competitors and how they differentiate
-4. Any recent news, milestones, or initiatives relevant to marketing
-
-Use what you find to make the media kit feel hand-crafted for this specific brand — not generic industry copy.
+Before writing the media kit, use the web_search tool to do ONE comprehensive search on the client. Search for their brand positioning, target market, key products/services, and recent campaigns in the Philippines — all in a single query. Use what you find to make the media kit feel hand-crafted for this specific brand.
 
 OUTPUT RULES:
 - After researching, return ONLY a valid JSON object
@@ -72,7 +69,7 @@ STRATEGY RULES:
 def build_user_prompt(req) -> str:
     sbus = ", ".join(req.selected_sbus) if req.selected_sbus else "No preference — AI to decide best fit"
 
-    return f"""Generate a tailored MBC media kit for this client. First use web_search to research them thoroughly, then return the JSON.
+    return f"""Generate a tailored MBC media kit for this client. Use web_search to research them first, then return the JSON.
 
 CLIENT DETAILS:
 Client Name: {req.client_name}
@@ -83,29 +80,38 @@ Budget Range: {req.budget}
 Preferred Platforms: {sbus}
 Additional Notes: {req.notes or "None"}
 
-Research this client thoroughly — their brand positioning, recent campaigns, products, and competitors in the Philippines — before writing. The kit should feel like it was written by someone who knows their brand inside out."""
+Research this client — their brand positioning, recent campaigns, products, and competitors in the Philippines — before writing. The kit should feel like it was written by someone who knows their brand inside out."""
 
 
 async def generate_kit_content(req) -> dict:
     """
-    Calls Claude API with web search enabled.
+    Calls Claude API with web search enabled and prompt caching on the system prompt.
     Claude researches the client then returns structured JSON.
     Raises ValueError if the response cannot be parsed.
     """
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-    # ── Web search tool definition ────────────────────────────────────────────
+    # ── Web search: capped at 2 uses to reduce search API costs ──────────────
     tools = [
         {
             "type": "web_search_20250305",
             "name": "web_search",
+            "max_uses": 2,
         }
     ]
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=5000,
-        system=SYSTEM_PROMPT,
+        max_tokens=2500,
+        # Prompt caching: system prompt is static so Anthropic serves it from
+        # cache on repeat calls, charging 10% of normal input token price.
+        system=[
+            {
+                "type": "text",
+                "text": SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ],
         tools=tools,
         messages=[
             {"role": "user", "content": build_user_prompt(req)}
@@ -113,22 +119,19 @@ async def generate_kit_content(req) -> dict:
     )
 
     # ── Extract the final text block (after tool use) ─────────────────────────
-    # Claude may return multiple blocks: tool_use + tool_result + final text
     raw = ""
     for block in response.content:
         if hasattr(block, "text") and block.text:
-            raw = block.text.strip()  # take the last text block
+            raw = block.text.strip()
 
     if not raw:
         raise ValueError("Claude returned no text content")
 
     # Extract JSON — handle preamble text + optional ```json fence
-    import re
     fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
     if fence_match:
         raw = fence_match.group(1)
     else:
-        # No fence — find the first { and last } to isolate the object
         start = raw.find("{")
         end = raw.rfind("}")
         if start != -1 and end != -1:
