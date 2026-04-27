@@ -4,40 +4,27 @@ import { INDUSTRIES } from "@/lib/constants";
 
 interface Props {
   clientName: string;
-  contactPerson: string;
   industry: string;
   onChange: (field: string, value: string) => void;
 }
 
-export default function ClientInfoSection({ clientName, contactPerson, industry, onChange }: Props) {
+export default function ClientInfoSection({ clientName, industry, onChange }: Props) {
   return (
     <div className="pb-7 mb-7 border-b border-silver">
       <div className="section-label">Client Information</div>
 
-      <div className="grid grid-cols-2 gap-3.5 mb-4">
-        <div>
-          <label className="field-label">
-            Client / Brand Name <span className="text-blue-500">*</span>
-          </label>
-          <input
-            type="text"
-            className="field-input"
-            placeholder="e.g. Jollibee Foods Corp."
-            value={clientName}
-            onChange={(e) => onChange("clientName", e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="field-label">Contact Person</label>
-          <input
-            type="text"
-            className="field-input"
-            placeholder="e.g. Maria Santos"
-            value={contactPerson}
-            onChange={(e) => onChange("contactPerson", e.target.value)}
-          />
-        </div>
+      <div className="mb-4">
+        <label className="field-label">
+          Client / Brand Name <span className="text-blue-500">*</span>
+        </label>
+        <input
+          type="text"
+          className="field-input"
+          placeholder="e.g. Jollibee Foods Corp."
+          value={clientName}
+          onChange={(e) => onChange("clientName", e.target.value)}
+          required
+        />
       </div>
 
       <div>

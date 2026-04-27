@@ -9,7 +9,6 @@ import BudgetSlider from "./BudgetSlider";
 
 interface FormState {
   clientName: string;
-  contactPerson: string;
   industry: string;
   objective: string;
   audience: string;
@@ -20,7 +19,6 @@ interface FormState {
 
 const INITIAL: FormState = {
   clientName: "",
-  contactPerson: "",
   industry: "",
   objective: "",
   audience: "",
@@ -68,7 +66,6 @@ export default function IntakeForm({ generate, isLoading }: Props) {
       <div className="p-9 flex flex-col">
         <ClientInfoSection
           clientName={form.clientName}
-          contactPerson={form.contactPerson}
           industry={form.industry}
           onChange={handleChange}
         />
