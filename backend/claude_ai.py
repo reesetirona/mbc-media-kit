@@ -116,7 +116,7 @@ async def generate_kit_content(req) -> dict:
     # Claude may return multiple blocks: tool_use + tool_result + final text
     raw = ""
     for block in response.content:
-        if hasattr(block, "text"):
+        if hasattr(block, "text") and block.text:
             raw = block.text.strip()  # take the last text block
 
     if not raw:
