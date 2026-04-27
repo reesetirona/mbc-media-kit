@@ -65,14 +65,14 @@ export default function IntakeForm({ generate, isLoading }: Props) {
 
   return (
     <div className="bg-white rounded-2xl shadow-[0_4px_32px_rgba(0,0,0,0.08)] overflow-hidden">
-      <div className="bg-navy px-9 py-7 relative overflow-hidden after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:bg-blue-400">
+      <div className="bg-navy px-5 py-5 sm:px-9 sm:py-7 relative overflow-hidden after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:bg-blue-400">
         <h1 className="font-syne text-[22px] font-bold text-white">Campaign Brief</h1>
         <p className="text-[13px] text-white/55 mt-1">
           Fill in the details below. MMG AI will generate a tailored media kit in seconds.
         </p>
       </div>
 
-      <div className="p-9 flex flex-col">
+      <div className="p-5 sm:p-9 flex flex-col">
         <ClientInfoSection
           clientName={form.clientName}
           industry={form.industry}
