@@ -801,7 +801,7 @@ input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
         </div>
       </div>
 
-      <!-- Section 4: Budget -->
+      <!-- Section 5: Budget -->
       <div class="section">
         <div class="section-label">Budget Range</div>
         <div class="field">
@@ -963,6 +963,7 @@ async function generateKit() {
   const objective  = document.getElementById('objective').value;
   const audience   = document.getElementById('audience').value.trim();
   const notes      = document.getElementById('notes').value.trim();
+
   const budgetVal  = document.getElementById('budgetSlider').value;
   const budget     = budgetValues[budgetVal];
 

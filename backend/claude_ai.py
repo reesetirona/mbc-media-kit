@@ -1,5 +1,6 @@
 """
-claude_ai.py — Calls the Anthropic API with the intake form data.
+claude_ai.py — Calls the Anthropic API with web search enabled.
+Claude researches the client before generating the media kit content.
 Returns a structured dict of placeholder values for the PPTX.
 """
 
@@ -12,10 +13,7 @@ if TYPE_CHECKING:
     from main import KitRequest
 
 # ── System Prompt ──────────────────────────────────────────────────────────────
-# This prompt defines Claude's role, the 6 SBUs, and the exact JSON schema to return.
-# Update SBU descriptions here if MBC's offerings change.
-
-SYSTEM_PROMPT = """You are a senior media strategist for MBC Media Group, the Philippines' premier multi-platform broadcaster. 
+SYSTEM_PROMPT = """You are a senior media strategist for MBC Media Group, the Philippines' premier multi-platform broadcaster.
 
 MBC has 6 Strategic Business Units:
 1. MBC Radio — DZRH, Love Radio, Yes FM, Easy Rock, Radyo Natin, Aksyon Radyo. 200 stations nationwide, 4.5M daily listeners. DZRH for news/talk audiences. Love Radio and Yes FM for 18-35 household buyers. Radyo Natin for provincial/regional reach.
@@ -25,46 +23,58 @@ MBC has 6 Strategic Business Units:
 5. MBC Promos — Multi-platform promotional campaigns, raffle draws, gamified audience engagement. Works across Radio, Digital, and Events.
 6. MBC Talents — Talent management. Brand endorsements through MBC radio/TV personalities with massive loyal followings.
 
-Your job: Read the client intake data and produce a media kit content package tailored specifically to that client.
+RESEARCH INSTRUCTIONS:
+Before writing the media kit, you MUST use the web_search tool to research the client. Search for:
+1. The client's brand positioning, recent campaigns, and marketing tone
+2. Their target market and key products/services in the Philippines
+3. Their competitors and how they differentiate
+4. Any recent news, milestones, or initiatives relevant to marketing
 
-Return ONLY a valid JSON object — no preamble, no markdown fences, no explanation. Follow this EXACT schema:
+Use what you find to make the media kit feel hand-crafted for this specific brand — not generic industry copy.
+
+OUTPUT RULES:
+- After researching, return ONLY a valid JSON object
+- No preamble, no markdown fences, no explanation outside the JSON
+- Follow this EXACT schema:
 
 {
-  "tagline": "One punchy sentence connecting MBC's reach to this client's brand mission (max 15 words)",
-  "client_intro": "2-3 sentences on why MBC is the perfect integrated media partner for this specific client. Be specific to their industry.",
-  "client_why": "2 sentences on the concrete MBC advantage for this industry. Cite specific stations, formats, or timing where relevant.",
+  "tagline": "One punchy sentence connecting MBC's reach to this client's specific brand mission (max 15 words)",
+  "client_intro": "2-3 sentences on why MBC is the perfect integrated media partner for this specific client. Reference real brand details from your research.",
+  "client_why": "2 sentences on the concrete MBC advantage for this client. Cite specific stations, audience numbers, or formats relevant to their actual target market.",
   "sbu_1_name": "Name of the most relevant SBU",
-  "sbu_1_desc": "2-3 sentences on why this SBU fits this client. Include specifics: station names, audience numbers, formats.",
-  "sbu_2_name": "Name of the second most relevant SBU",
+  "sbu_1_desc": "2-3 sentences on why this SBU fits this client. Reference specific stations, timing, or formats that match their brand.",
+  "sbu_2_name": "Name of second most relevant SBU",
   "sbu_2_desc": "2-3 sentences on why this SBU fits.",
-  "sbu_3_name": "Name of the third most relevant SBU",
+  "sbu_3_name": "Name of third most relevant SBU",
   "sbu_3_desc": "2-3 sentences on why this SBU fits.",
-  "campaign_title": "Evocative 3-6 word campaign name. Filipino/English mix is encouraged.",
-  "campaign_desc": "3 sentences describing a concrete integrated campaign concept for this client. Be specific about the mechanics.",
-  "deliverable_1": "Specific deliverable with format, duration, and platform (e.g. '30-sec radio spots on DZRH + Love Radio, 6 weeks, prime slots')",
+  "campaign_title": "Evocative 3-6 word campaign name. Filipino/English mix encouraged.",
+  "campaign_desc": "3 sentences describing a concrete integrated campaign concept. Be specific about mechanics, timing, and platforms.",
+  "deliverable_1": "Specific deliverable with format, duration, and platform (e.g. '30-sec radio spots on Love Radio + Yes FM, 8 weeks, breakfast drive time 6-9AM')",
   "deliverable_2": "Specific deliverable",
   "deliverable_3": "Specific deliverable",
-  "platform_1": "Platform name — station or channel names",
-  "pct_1": "Recommended % of media weight and one-sentence rationale",
+  "platform_1": "Platform name — specific station or channel names",
+  "pct_1": "Recommended % of media weight and one-sentence rationale tied to this client's audience",
   "platform_2": "Platform name",
   "pct_2": "Recommended % and rationale",
   "platform_3": "Platform name",
   "pct_3": "Recommended % and rationale",
-  "cta_line": "One personalized closing line addressed to this specific client (max 15 words)",
+  "cta_line": "One personalized closing line addressed to this specific client. Reference their brand or mission (max 15 words).",
   "recommended_sbus": ["SBU name 1", "SBU name 2", "SBU name 3"]
 }
 
-Rules:
-- Select the 3 SBUs most relevant to this client's industry and objectives. Be strategic, not generic.
-- Use Filipino market context and local timing insights where relevant (e.g. breakfast drive time, payday weekends, fiesta season).
-- If the client preferred specific SBUs in the intake form, weight those heavily unless they are clearly a poor fit.
-- Keep all copy professional, confident, and specific. Avoid filler phrases."""
+STRATEGY RULES:
+- Select the 3 SBUs most relevant to this client's industry and objectives
+- Use Filipino market context: payday weekends (15th & 30th), breakfast drive time, fiesta season, ber months
+- Weight preferred SBUs heavily unless clearly a poor fit
+- Keep all copy professional, confident, and specific — no generic filler"""
 
 
 def build_user_prompt(req) -> str:
     sbus = ", ".join(req.selected_sbus) if req.selected_sbus else "No preference — AI to decide best fit"
-    return f"""Generate tailored MBC media kit content for this client:
 
+    return f"""Generate a tailored MBC media kit for this client. First use web_search to research them thoroughly, then return the JSON.
+
+CLIENT DETAILS:
 Client Name: {req.client_name}
 Industry: {req.industry}
 Campaign Objective: {req.objective}
@@ -73,28 +83,46 @@ Budget Range: {req.budget}
 Preferred Platforms: {sbus}
 Additional Notes: {req.notes or "None"}
 
-Select the 3 most strategic SBUs. Be specific and compelling."""
+Research this client thoroughly — their brand positioning, recent campaigns, products, and competitors in the Philippines — before writing. The kit should feel like it was written by someone who knows their brand inside out."""
 
 
 async def generate_kit_content(req) -> dict:
     """
-    Calls Claude API and returns the parsed JSON content dict.
+    Calls Claude API with web search enabled.
+    Claude researches the client then returns structured JSON.
     Raises ValueError if the response cannot be parsed.
     """
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
+    # ── Web search tool definition ────────────────────────────────────────────
+    tools = [
+        {
+            "type": "web_search_20250305",
+            "name": "web_search",
+        }
+    ]
+
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=3000,
+        max_tokens=5000,
         system=SYSTEM_PROMPT,
+        tools=tools,
         messages=[
             {"role": "user", "content": build_user_prompt(req)}
         ],
     )
 
-    raw = response.content[0].text.strip()
+    # ── Extract the final text block (after tool use) ─────────────────────────
+    # Claude may return multiple blocks: tool_use + tool_result + final text
+    raw = ""
+    for block in response.content:
+        if hasattr(block, "text"):
+            raw = block.text.strip()  # take the last text block
 
-    # Strip markdown fences if Claude adds them despite instructions
+    if not raw:
+        raise ValueError("Claude returned no text content")
+
+    # Strip markdown fences if present
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"):
