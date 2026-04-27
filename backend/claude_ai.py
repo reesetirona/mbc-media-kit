@@ -122,12 +122,17 @@ async def generate_kit_content(req) -> dict:
     if not raw:
         raise ValueError("Claude returned no text content")
 
-    # Strip markdown fences if present
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-        raw = raw.strip()
+    # Extract JSON — handle preamble text + optional ```json fence
+    import re
+    fence_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
+    if fence_match:
+        raw = fence_match.group(1)
+    else:
+        # No fence — find the first { and last } to isolate the object
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start != -1 and end != -1:
+            raw = raw[start:end + 1]
 
     try:
         return json.loads(raw)
