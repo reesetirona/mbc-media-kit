@@ -6,6 +6,8 @@ export interface KitRequest {
   budget: string;
   selected_sbus: string[];
   notes: string;
+  rep_name: string;
+  rep_mobile: string;
   rep_email: string;
 }
 

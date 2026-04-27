@@ -34,7 +34,7 @@ export function useKitGenerator() {
 
   const generate = useCallback(
     async (
-      formData: Omit<KitRequest, "budget"> & { budgetIndex: number; rep_email: string }
+      formData: Omit<KitRequest, "budget"> & { budgetIndex: number }
     ) => {
       // Revoke any previous object URL to avoid memory leaks
       setState((s) => {
@@ -52,6 +52,8 @@ export function useKitGenerator() {
         budget: BUDGET_VALUES[formData.budgetIndex],
         selected_sbus: formData.selected_sbus,
         notes: formData.notes,
+        rep_name: formData.rep_name,
+        rep_mobile: formData.rep_mobile,
         rep_email: formData.rep_email,
       };
 

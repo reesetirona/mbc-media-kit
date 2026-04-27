@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useKitGenerator } from "@/hooks/useKitGenerator";
 import ClientInfoSection from "./ClientInfoSection";
 import CampaignGoalsSection from "./CampaignGoalsSection";
+import SalesRepSection from "./SalesRepSection";
 import SBUSelector from "./SBUSelector";
 import BudgetSlider from "./BudgetSlider";
 
@@ -15,6 +16,9 @@ interface FormState {
   notes: string;
   selectedSBUs: string[];
   budgetIndex: number;
+  repName: string;
+  repMobile: string;
+  repEmail: string;
 }
 
 const INITIAL: FormState = {
@@ -25,6 +29,9 @@ const INITIAL: FormState = {
   notes: "",
   selectedSBUs: [],
   budgetIndex: 3,
+  repName: "",
+  repMobile: "",
+  repEmail: "",
 };
 
 interface Props {
@@ -48,7 +55,9 @@ export default function IntakeForm({ generate, isLoading }: Props) {
       budgetIndex: form.budgetIndex,
       selected_sbus: form.selectedSBUs,
       notes: form.notes,
-      rep_email: "",
+      rep_name: form.repName,
+      rep_mobile: form.repMobile,
+      rep_email: form.repEmail,
     });
   };
 
@@ -78,6 +87,12 @@ export default function IntakeForm({ generate, isLoading }: Props) {
         <SBUSelector
           selected={form.selectedSBUs}
           onChange={(sbus) => setForm((f) => ({ ...f, selectedSBUs: sbus }))}
+        />
+        <SalesRepSection
+          repName={form.repName}
+          repMobile={form.repMobile}
+          repEmail={form.repEmail}
+          onChange={handleChange}
         />
         <BudgetSlider
           value={form.budgetIndex}

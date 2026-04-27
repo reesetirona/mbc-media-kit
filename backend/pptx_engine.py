@@ -15,7 +15,7 @@ from typing import Dict
 # Maps {{TAG}} → key in the AI-generated kit dict.
 # Update this whenever a new placeholder is added to the PPTX.
 
-def build_replacements(client_name: str, industry: str, kit: dict) -> Dict[str, str]:
+def build_replacements(client_name: str, industry: str, kit: dict, rep_name: str = "", rep_mobile: str = "", rep_email: str = "") -> Dict[str, str]:
     """
     Constructs the full placeholder → value mapping.
     Add new placeholders here when expanding the master deck.
@@ -44,9 +44,9 @@ def build_replacements(client_name: str, industry: str, kit: dict) -> Dict[str, 
         "{{PLATFORM_3}}":       kit.get("platform_3", ""),
         "{{PCT_3}}":            kit.get("pct_3", ""),
         "{{CTA_LINE}}":         kit.get("cta_line", ""),
-        "{{CONTACT_NAME}}":     "MBC Media Group Sales Team",
-        "{{CONTACT_TITLE}}":    "Integrated Media Solutions",
-        "{{CONTACT_EMAIL}}":    "corporate@mbcmediagroup.com",
+        "{{CONTACT_NAME}}":     rep_name   or "MBC Media Group Sales Team",
+        "{{CONTACT_TITLE}}":    rep_mobile or "Integrated Media Solutions",
+        "{{CONTACT_EMAIL}}":    rep_email  or "corporate@mbcmediagroup.com",
     }
 
 
@@ -62,7 +62,7 @@ def xml_escape(value: str) -> str:
     )
 
 
-def apply_replacements(pptx_bytes: bytes, client_name: str, industry: str, kit: dict) -> bytes:
+def apply_replacements(pptx_bytes: bytes, client_name: str, industry: str, kit: dict, rep_name: str = "", rep_mobile: str = "", rep_email: str = "") -> bytes:
     """
     Takes the master PPTX as bytes, applies all placeholder replacements,
     and returns the modified PPTX as bytes.
@@ -70,7 +70,7 @@ def apply_replacements(pptx_bytes: bytes, client_name: str, industry: str, kit: 
     Works by treating the PPTX as a ZIP archive and doing string replacement
     on the raw XML of each slide — preserving all fonts, colors, and layouts.
     """
-    replacements = build_replacements(client_name, industry, kit)
+    replacements = build_replacements(client_name, industry, kit, rep_name, rep_mobile, rep_email)
 
     # Check for any unreplaced placeholders after we're done (for debugging)
     replaced_count = 0

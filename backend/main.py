@@ -41,6 +41,8 @@ class KitRequest(BaseModel):
     budget: str
     selected_sbus: List[str] = []
     notes: Optional[str] = ""
+    rep_name: Optional[str] = ""
+    rep_mobile: Optional[str] = ""
     rep_email: Optional[str] = ""
 
 
@@ -82,6 +84,9 @@ async def generate_kit(req: KitRequest):
             client_name=req.client_name,
             industry=req.industry,
             kit=kit_content,
+            rep_name=req.rep_name or "",
+            rep_mobile=req.rep_mobile or "",
+            rep_email=req.rep_email or "",
         )
         logger.info("PPTX replacements applied successfully")
 
