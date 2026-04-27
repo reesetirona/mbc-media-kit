@@ -74,7 +74,7 @@ export default function PreviewCard({ state, onDownloadAgain }: Props) {
               </svg>
             </div>
             <p className="text-[13px] text-red-600 max-w-[220px] leading-relaxed">
-              {state.errorMessage || "Generation failed. Please try again."}
+              {state.errorMessage || "Unknown error — check the browser console."}
             </p>
           </div>
         )}
